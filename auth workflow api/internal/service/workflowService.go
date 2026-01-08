@@ -39,14 +39,14 @@ func (s *WorkflowService)StepHandler(steps []string,workflowid string)(error)  {
 			WorkflowID: workflowid,
 			Name: step,
 			Status: "Pending",
-			RetryCount: 0,
-			
+			RetryCount: 0,	
 		}
 			err := s.service.SaveWorkflowStep(currstep)
 
 			//[push stepworflow into workflow queue]
 
 			queue.WorkflowStepQueue <- currstep
+			
 		if err != nil {
 			return err 
 		}

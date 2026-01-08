@@ -19,3 +19,4 @@ func connectmysql()  {
 
 	DB=db
 }
+
