@@ -5,6 +5,7 @@ import (
 	"auth-workflow/internal/service"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -53,4 +54,49 @@ func (h *HandlerUser)LoginUser(w http.ResponseWriter,r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{
 		"token":token,
 	})
+}
+
+func (h *HandlerUser) Profile(w http.ResponseWriter, r *http.Request) {
+
+	// 1️⃣ Authorization header lo
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "missing authorization header", http.StatusUnauthorized)
+		return
+	}
+
+	// Expected: "Bearer <token>"
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		http.Error(w, "invalid authorization format", http.StatusUnauthorized)
+		return
+	}
+
+	tokenString := parts[1]
+
+	//  JWT verify + parse
+	claims, err := h.handler.VerifyJWT(tokenString)
+	if err != nil {
+		http.Error(w, "invalid or expired token", http.StatusUnauthorized)
+		return
+	}
+
+	//  userID claims se nikalo
+	userID := claims.UserID
+	if userID == "" {
+		http.Error(w, "invalid token claims", http.StatusUnauthorized)
+		return
+	}
+
+	//  DB se user profile lao
+	user, err := h.handler.GetUserByID(userID)
+	if err != nil {
+		http.Error(w, "failed to fetch profile", http.StatusInternalServerError)
+		return
+	}
+
+	//  Response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
 }

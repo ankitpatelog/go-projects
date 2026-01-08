@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -79,14 +79,17 @@ func (s *UserService) Authentication(loginReq *models.LoginRequest) (string, err
 	//if refresh token not found then make new one
 	//else found then simple return without doing anything
 
-	
+	_, err = s.generateRefToken(loginReq)
+	if err != nil {
+		return "", err
+	}
 
 	return token, nil
 }
 
 
+var jwtSecret = []byte("SUPER_SECRET_KEY") 
 func (s *UserService)GenerateJWT(loginreq *models.LoginRequest)(string,error)  {
-	var jwtSecret = []byte("SUPER_SECRET_KEY") 
 	userid,err := s.service.GetuserID(loginreq.Email)
 	if err!=nil {
 		return "",nil
@@ -110,3 +113,67 @@ func (s *UserService)GenerateJWT(loginreq *models.LoginRequest)(string,error)  {
 
 	return signedToken, nil
 }
+
+func (s *UserService) generateRefToken(
+	loqinDetail *models.LoginRequest,
+) (*models.RefreshToken, error) {
+
+	id, err := s.service.GetuserID(loqinDetail.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	exists, err := s.service.IsRefTokenExists(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if exists {
+		// FIX: nil,nil mat bhejo — clear signal do
+		return &models.RefreshToken{}, nil
+	}
+
+	tkn := &models.RefreshToken{
+		ID:      uuid.NewString(),
+		UserID:  id,
+		Token:   uuid.NewString(),
+		Revoked: false,
+	}
+
+	reftoken, err := s.service.SaveRefToken(tkn)
+	if err != nil {
+		return nil, err
+	}
+
+	return reftoken, nil
+}
+
+type Claims struct {
+	UserID string `json:"user_id"`
+	jwt.RegisteredClaims
+}
+
+func (s *UserService) VerifyJWT(tokenString string) (*Claims, error) {
+
+	claims := &Claims{}
+
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		claims,
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte(jwtSecret), nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !token.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	return claims, nil
+}
+
+

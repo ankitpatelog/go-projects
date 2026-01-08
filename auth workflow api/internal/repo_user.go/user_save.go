@@ -4,6 +4,7 @@ import (
 	"auth-workflow/internal/models"
 	"database/sql"
 	"errors"
+
 )
 
 type SaveRepo struct {
@@ -66,10 +67,54 @@ func (r *SaveRepo) GetuserID(email string) (string, error) {
 }
 
 //refresh token
-func (r *SaveRepo) SaveRefToken(user *models.User) (*models.User, error) {
-	
+func (r *SaveRepo) SaveRefToken(token *models.RefreshToken) (*models.RefreshToken, error) {
 
+	query := `
+	INSERT INTO RefreshToken (id,user_id, token, expires_at, revoked)
+	VALUES (?, ?, ?, ?)
+	`
+
+	_, err := r.DB.Exec(
+		query,
+		token.ID,
+		token.UserID,
+		token.Token,
+		token.ExpiresAt,
+		token.Revoked,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }
+
+func (r *SaveRepo) IsRefTokenExists(userID string) (bool, error) {
+
+	query := `SELECT id, revoked FROM refresh_tokens WHERE user_id = ? LIMIT 1`
+
+	var id int
+	var revoked bool
+
+	err := r.DB.QueryRow(query, userID).Scan(&id, &revoked)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+
+	// token exists but revoked
+	if revoked {
+		return false, nil
+	}
+
+	// token exists and active
+	return true, nil
+}
+
+
+
 
 
 
