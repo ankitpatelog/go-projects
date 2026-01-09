@@ -4,7 +4,15 @@ import (
 	"auth-workflow/internal/models"
 	"database/sql"
 
+	"github.com/pelletier/go-toml/query"
+	"go.uber.org/mock/mockgen/model"
 )
+
+func NewrepoWorkflowInstance(db *sql.DB)*WorkflowRepo  {
+	return &WorkflowRepo{
+		DB: db,
+	}
+}
 
 type WorkflowRepo struct {
 	DB *sql.DB
@@ -85,4 +93,32 @@ func UpdateRetryCount(db *sql.DB, id string) (int, error) {
 	}
 
 	return prevcounter,err
+}
+
+func (r *WorkflowRepo) GetworkflowbyID(id string) ([]models.WorkflowStep,error)  {
+	query :=`SELECT id,workflowid,name,status,retrycount from WorkflowStep where id = ?`
+
+	
+	rows, err := r.DB.Query(query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	
+	var allworkflows []models.WorkflowStep
+	for rows.Next(){
+		var workflow models.WorkflowStep
+
+		err := rows.Scan(&workflow.ID,&workflow.WorkflowID,&workflow.Name,&workflow.Status,&workflow.RetryCount)
+		if err!=nil {
+			return nil,err
+		}
+
+		allworkflows = append(allworkflows, workflow)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return allworkflows, nil
 }

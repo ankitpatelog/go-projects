@@ -3,12 +3,19 @@ package handler
 import (
 	"auth-workflow/internal/models"
 	"auth-workflow/internal/service"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strings"
 
 	"github.com/google/uuid"
 )
+
+func NewHnadlerInstance(db *sql.DB)*HandlerUser  {
+	return &HandlerUser{
+		handler: service.NewUserService(db),
+	}
+}
 
 type HandlerUser struct{
 	handler *service.UserService

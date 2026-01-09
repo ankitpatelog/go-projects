@@ -3,15 +3,21 @@ package service
 import (
 	"auth-workflow/internal/models"
 	"auth-workflow/internal/repo_user.go"
+	"auth-workflow/internal/service"
 	"database/sql"
 	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
-
 	"golang.org/x/crypto/bcrypt"
 )
+
+func NewUserService(db *sql.DB)*UserService  {
+	return &UserService{
+		service: repo_user.NewrepoUserInstance(db) ,
+	}
+}
 
 type UserService struct {
 	service *repo_user.SaveRepo

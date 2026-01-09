@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func startWorker() {
+func StartWorker() {
 	go func() {
 		// get all the pending workflowsteps
 		var db *sql.DB

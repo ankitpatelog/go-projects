@@ -7,6 +7,12 @@ import (
 
 )
 
+func NewrepoUserInstance(db *sql.DB)*SaveRepo  {
+	return &SaveRepo{
+		DB: db,
+	}
+}
+
 type SaveRepo struct {
 	DB *sql.DB
 }

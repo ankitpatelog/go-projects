@@ -2,11 +2,19 @@ package service
 
 import (
 	"auth-workflow/internal/models"
-	"auth-workflow/internal/repo_workflow"
 	"auth-workflow/internal/queue"
+	"auth-workflow/internal/repo_workflow"
+	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/pelletier/go-toml/query"
 )
+
+func NewserviceInstance(db *sql.DB)*WorkflowService  {
+	return &WorkflowService{
+		service: repo_workflow.NewrepoWorkflowInstance(db),
+	}
+}
 
 type WorkflowService struct {
 	service *repo_workflow.WorkflowRepo
@@ -52,5 +60,15 @@ func (s *WorkflowService)StepHandler(steps []string,workflowid string)(error)  {
 		}
 	}
 	return nil
+}
+
+func (s *WorkflowService)Processandgetworkflows(id string)([]models.WorkflowStep,error)  {
+	//call repo fucntion and provide  id
+	workflows,err := s.service.GetworkflowbyID(id)
+	if err!=nil {
+		return nil,err
+	}
+
+	return workflows,nil
 }
 
