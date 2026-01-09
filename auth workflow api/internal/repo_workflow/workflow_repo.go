@@ -1,11 +1,9 @@
 package repo_workflow
 
 import (
-	"auth-workflow/internal/config"
 	"auth-workflow/internal/models"
 	"database/sql"
 
-	"github.com/pelletier/go-toml/query"
 )
 
 type WorkflowRepo struct {
